@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Candidates</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      margin-top: 20px;
+      text-align: center;
+    }
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Job Description</h1>
+    <form id="uploadForm">
+      <input type="file" id="pdfFile" accept=".pdf" required>
+      <br>
+      <button type="submit">Upload and Get Top Candidates</button>
+    </form>
+    <div id="results">
+      <h2>Top Candidates</h2>
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Job Title</th>
+            <th>Predicted Score</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const uploadForm = document.getElementById("uploadForm");
+    const resultsTable = document.getElementById("resultsTable").querySelector("tbody");
+
+    uploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const fileInput = document.getElementById("pdfFile");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please upload a file.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/process-job-description/", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        displayResults(data.top_candidates);
+      } catch (error) {
+        alert(`An error occurred: ${error.message}`);
+      }
+    });
+
+    function displayResults(candidates) {
+      resultsTable.innerHTML = ""; // Clear previous results
+
+      candidates.forEach((candidate) => {
+        const row = document.createElement("tr");
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = candidate.Name;
+        row.appendChild(nameCell);
+
+        const jobTitleCell = document.createElement("td");
+        jobTitleCell.textContent = candidate["Job title"];
+        row.appendChild(jobTitleCell);
+
+        const scoreCell = document.createElement("td");
+        scoreCell.textContent = candidate.predicted_score.toFixed(2);
+        row.appendChild(scoreCell);
+
+        resultsTable.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>
